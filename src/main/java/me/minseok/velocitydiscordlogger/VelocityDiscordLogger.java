@@ -20,7 +20,7 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-@Plugin(id = "velocity-discordlogger", name = "Velocity-DiscordLogger", version = "1.0.3", description = "Network-level Discord logging with embeds and player icons", authors = {
+@Plugin(id = "velocity-discordlogger", name = "Velocity-DiscordLogger", version = "1.0.4", description = "Network-level Discord logging with embeds and player icons", authors = {
         "minseok" })
 public class VelocityDiscordLogger {
 
@@ -146,6 +146,33 @@ public class VelocityDiscordLogger {
                                         "The linking code from in-game", true))
                         .queue();
 
+                // Setup Console Logging
+                setupConsoleLogging();
+
+                // Send Server Start Message
+                if (config.isStartEnabled()) {
+                    String channelId = config.getStatusChannelId();
+                    logger.info("Attempting to send start message to channel: " + channelId);
+
+                    if (!channelId.isEmpty()) {
+                        net.dv8tion.jda.api.entities.channel.concrete.TextChannel channel = jda
+                                .getTextChannelById(channelId);
+                        if (channel != null) {
+                            try {
+                                @SuppressWarnings("null")
+                                var action = channel.sendMessageEmbeds(messageBuilder.buildServerStartEmbed());
+                                action.complete();
+                                logger.info("Server start message sent successfully!");
+                            } catch (Exception e) {
+                                logger.error("Failed to send server start message", e);
+                            }
+                        } else {
+                            logger.warn("Status channel NOT found! ID: " + channelId);
+                        }
+                    } else {
+                        logger.warn("Status channel ID is empty in config!");
+                    }
+                }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 logger.error("Discord bot initialization interrupted!", e);
@@ -153,33 +180,6 @@ public class VelocityDiscordLogger {
                 logger.error("Failed to connect to Discord!", e);
             }
         }).schedule();
-
-        // Setup Console Logging
-        setupConsoleLogging();
-
-        // Send Server Start Message
-        if (config.isStartEnabled()) {
-            String channelId = config.getStatusChannelId();
-            logger.info("Attempting to send start message to channel: " + channelId);
-
-            if (!channelId.isEmpty()) {
-                net.dv8tion.jda.api.entities.channel.concrete.TextChannel channel = jda.getTextChannelById(channelId);
-                if (channel != null) {
-                    try {
-                        @SuppressWarnings("null")
-                        var action = channel.sendMessageEmbeds(messageBuilder.buildServerStartEmbed());
-                        action.complete();
-                        logger.info("Server start message sent successfully!");
-                    } catch (Exception e) {
-                        logger.error("Failed to send server start message", e);
-                    }
-                } else {
-                    logger.warn("Status channel NOT found! ID: " + channelId);
-                }
-            } else {
-                logger.warn("Status channel ID is empty in config!");
-            }
-        }
 
         // Register JVM Shutdown Hook
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
