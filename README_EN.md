@@ -39,7 +39,7 @@ Monitor your entire network status perfectly without DiscordSRV, and get notifie
 ## 📥 Installation
 
 1. Download the latest version from [Releases](https://github.com/minseok7891/VelocityDiscordLogger/releases).
-2. Place the `VelocityDiscordLogger-1.0.0.jar` file into your Velocity `plugins` folder.
+2. Place the `VelocityDiscordLogger-1.0.2.jar` file into your Velocity `plugins` folder.
 3. Restart the server to generate configuration files.
 4. Edit `plugins/velocitydiscordlogger/config.toml` to complete the setup.
 
