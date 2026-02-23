@@ -14,7 +14,7 @@ plugins {
 }
 
 group = 'me.minseok'
-version = '1.0.0'
+version = '1.0.2'
 
 repositories {
     mavenCentral()
@@ -44,7 +44,7 @@ java {
 }
 
 shadowJar {
-    archiveBaseName.set('Discord-Logger-Main')
+    archiveBaseName.set('Velocity-DiscordLogger')
     archiveClassifier.set('')
     mergeServiceFiles()
     relocate 'net.dv8tion.jda', 'me.minseok.velocitydiscordlogger.libs.jda'

@@ -20,7 +20,7 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-@Plugin(id = "discord-logger-main", name = "Discord-Logger-Main", version = "1.0.0", description = "Network-level Discord logging with embeds and player icons", authors = {
+@Plugin(id = "velocity-discordlogger", name = "Velocity-DiscordLogger", version = "1.0.2", description = "Network-level Discord logging with embeds and player icons", authors = {
         "minseok" })
 public class VelocityDiscordLogger {
 
@@ -67,96 +67,92 @@ public class VelocityDiscordLogger {
             return;
         }
 
-        // Initialize Discord bot with timeout
-        try {
-            jda = JDABuilder.createDefault(config.getBotToken())
-                    .enableIntents(GatewayIntent.GUILD_MEMBERS, GatewayIntent.MESSAGE_CONTENT,
-                            GatewayIntent.DIRECT_MESSAGES)
-                    .build();
+        // Initialize Discord bot asynchronously to prevent proxy freeze
+        server.getScheduler().buildTask(this, () -> {
+            try {
+                jda = JDABuilder.createDefault(config.getBotToken())
+                        .enableIntents(GatewayIntent.GUILD_MEMBERS, GatewayIntent.MESSAGE_CONTENT,
+                                GatewayIntent.DIRECT_MESSAGES)
+                        .build();
 
-            // 타임아웃: 30초
-            long startTime = System.currentTimeMillis();
-            while (jda.getStatus() != JDA.Status.CONNECTED &&
-                    System.currentTimeMillis() - startTime < 30000) {
-                Thread.sleep(500);
+                // Wait for JDA to be fully connected (blocking only the async task thread)
+                jda.awaitReady();
+
+                logger.info("Discord bot connected successfully!");
+
+                // Validate channel IDs
+                if (!validateChannelIds()) {
+                    logger.warn("Some Discord channel IDs are invalid - check your configuration!");
+                }
+
+                // Initialize message builder
+                messageBuilder = new DiscordMessageBuilder(config);
+
+                // Initialize Database
+                database = new Database(config, logger);
+                try {
+                    database.connect();
+                    logger.info("Connected to database!");
+                } catch (Exception e) {
+                    logger.error("Failed to connect to database", e);
+                }
+
+                // Register plugin messaging channel
+                server.getChannelRegistrar().register(PluginMessageListener.getIdentifier());
+                PluginMessageListener pluginMessageListener = new PluginMessageListener(jda, config, messageBuilder,
+                        logger);
+                server.getEventManager().register(VelocityDiscordLogger.this, pluginMessageListener);
+
+                // Register event listener for join/quit
+                server.getEventManager().register(VelocityDiscordLogger.this,
+                        new PlayerEventListener(jda, config, messageBuilder, logger));
+
+                // Register Chat Listener
+                server.getEventManager().register(VelocityDiscordLogger.this,
+                        new ChatListener(jda, config, logger, database, server, VelocityDiscordLogger.this));
+
+                // Register Link Command
+                linkCommand = new LinkCommand();
+                server.getCommandManager().register(
+                        server.getCommandManager().metaBuilder("link").build(),
+                        linkCommand);
+
+                // Schedule LinkCommand cleanup task (every 1 minute)
+                server.getScheduler().buildTask(VelocityDiscordLogger.this, () -> linkCommand.cleanup())
+                        .repeat(java.time.Duration.ofMinutes(1))
+                        .schedule();
+
+                // Register Slash Command Listener
+                jda.addEventListener(new SlashCommandListener(server, config, logger, database, linkCommand));
+
+                // Register Discord Event Listener (Chat)
+                jda.addEventListener(new DiscordEventListener(server, config, logger, database, linkCommand));
+
+                // Register Discord Command
+                server.getCommandManager().register(
+                        server.getCommandManager().metaBuilder("discord").build(),
+                        new DiscordCommand(config, database));
+
+                // Register Slash Commands
+                jda.updateCommands().addCommands(
+                        net.dv8tion.jda.api.interactions.commands.build.Commands.slash("cmd", "Execute a proxy command")
+                                .addOption(net.dv8tion.jda.api.interactions.commands.OptionType.STRING, "command",
+                                        "The command to execute", true),
+                        net.dv8tion.jda.api.interactions.commands.build.Commands.slash("status",
+                                "Show proxy server status"),
+                        net.dv8tion.jda.api.interactions.commands.build.Commands
+                                .slash("link", "Link your Minecraft account")
+                                .addOption(net.dv8tion.jda.api.interactions.commands.OptionType.STRING, "code",
+                                        "The linking code from in-game", true))
+                        .queue();
+
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                logger.error("Discord bot initialization interrupted!", e);
+            } catch (Exception e) {
+                logger.error("Failed to connect to Discord!", e);
             }
-
-            if (jda.getStatus() != JDA.Status.CONNECTED) {
-                logger.error("Discord bot timeout - did not connect within 30 seconds!");
-                return;
-            }
-
-            logger.info("Discord bot connected successfully!");
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            logger.error("Discord bot initialization interrupted!", e);
-            return;
-        } catch (Exception e) {
-            logger.error("Failed to connect to Discord!", e);
-            return;
-        }
-
-        // Validate channel IDs
-        if (!validateChannelIds()) {
-            logger.warn("Some Discord channel IDs are invalid - check your configuration!");
-        }
-
-        // Initialize message builder
-        messageBuilder = new DiscordMessageBuilder(config);
-
-        // Initialize Database
-        database = new Database(config, logger);
-        try {
-            database.connect();
-            logger.info("Connected to database!");
-        } catch (Exception e) {
-            logger.error("Failed to connect to database", e);
-        }
-
-        // Register plugin messaging channel
-        server.getChannelRegistrar().register(PluginMessageListener.getIdentifier());
-        PluginMessageListener pluginMessageListener = new PluginMessageListener(jda, config, messageBuilder, logger);
-        server.getEventManager().register(this, pluginMessageListener);
-
-        // Register event listener for join/quit
-        server.getEventManager().register(this, new PlayerEventListener(jda, config, messageBuilder, logger));
-
-        // Register Chat Listener
-        server.getEventManager().register(this,
-                new ChatListener(jda, config, logger, database, server, this));
-
-        // Register Link Command
-        linkCommand = new LinkCommand();
-        server.getCommandManager().register(
-                server.getCommandManager().metaBuilder("link").build(),
-                linkCommand);
-
-        // Schedule LinkCommand cleanup task (every 1 minute)
-        server.getScheduler().buildTask(this, () -> linkCommand.cleanup())
-                .repeat(java.time.Duration.ofMinutes(1))
-                .schedule();
-
-        // Register Slash Command Listener
-        jda.addEventListener(new SlashCommandListener(server, config, logger, database, linkCommand));
-
-        // Register Discord Event Listener (Chat)
-        jda.addEventListener(new DiscordEventListener(server, config, logger, database, linkCommand));
-
-        // Register Discord Command
-        server.getCommandManager().register(
-                server.getCommandManager().metaBuilder("discord").build(),
-                new DiscordCommand(config, database));
-
-        // Register Slash Commands
-        jda.updateCommands().addCommands(
-                net.dv8tion.jda.api.interactions.commands.build.Commands.slash("cmd", "Execute a proxy command")
-                        .addOption(net.dv8tion.jda.api.interactions.commands.OptionType.STRING, "command",
-                                "The command to execute", true),
-                net.dv8tion.jda.api.interactions.commands.build.Commands.slash("status", "Show proxy server status"),
-                net.dv8tion.jda.api.interactions.commands.build.Commands.slash("link", "Link your Minecraft account")
-                        .addOption(net.dv8tion.jda.api.interactions.commands.OptionType.STRING, "code",
-                                "The linking code from in-game", true))
-                .queue();
+        }).schedule();
 
         // Setup Console Logging
         setupConsoleLogging();
