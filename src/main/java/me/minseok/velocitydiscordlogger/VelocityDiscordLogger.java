@@ -20,7 +20,7 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-@Plugin(id = "velocity-discordlogger", name = "Velocity-DiscordLogger", version = "1.0.2", description = "Network-level Discord logging with embeds and player icons", authors = {
+@Plugin(id = "velocity-discordlogger", name = "Velocity-DiscordLogger", version = "1.0.3", description = "Network-level Discord logging with embeds and player icons", authors = {
         "minseok" })
 public class VelocityDiscordLogger {
 

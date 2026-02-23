@@ -1,1 +1,1 @@
-{"id":"velocitydiscordlogger","name":"VelocityDiscordLogger","version":"1.0.0","description":"Network-level Discord logging with embeds and player icons","authors":["minseok"],"dependencies":[],"main":"me.minseok.velocitydiscordlogger.VelocityDiscordLogger"}
+{"id":"velocity-discordlogger","name":"Velocity-DiscordLogger","version":"1.0.3","description":"Network-level Discord logging with embeds and player icons","authors":["minseok"],"dependencies":[],"main":"me.minseok.velocitydiscordlogger.VelocityDiscordLogger"}

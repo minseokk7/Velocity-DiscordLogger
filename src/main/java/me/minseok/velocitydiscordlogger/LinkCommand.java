@@ -36,7 +36,7 @@ public class LinkCommand implements SimpleCommand {
         CommandSource source = invocation.source();
 
         if (!(source instanceof Player)) {
-            source.sendMessage(Component.text("Only players can use this command.", NamedTextColor.RED));
+            source.sendMessage(Component.text("이 명령어는 플레이어만 사용할 수 있습니다.", NamedTextColor.RED));
             return;
         }
 
@@ -44,7 +44,7 @@ public class LinkCommand implements SimpleCommand {
         UUID uuid = player.getUniqueId();
 
         if (cooldowns.containsKey(uuid) && System.currentTimeMillis() < cooldowns.get(uuid)) {
-            source.sendMessage(Component.text("Please wait before generating another code.", NamedTextColor.RED));
+            source.sendMessage(Component.text("잠시 후 다시 시도해주세요.", NamedTextColor.RED));
             return;
         }
 
@@ -52,13 +52,13 @@ public class LinkCommand implements SimpleCommand {
         linkCodes.put(code, new LinkCode(uuid, System.currentTimeMillis()));
         cooldowns.put(uuid, System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(60)); // 60s cooldown
 
-        source.sendMessage(Component.text("Your linking code is: ", NamedTextColor.GREEN)
+        source.sendMessage(Component.text("연동 코드: ", NamedTextColor.GREEN)
                 .append(Component.text(code, NamedTextColor.YELLOW,
                         net.kyori.adventure.text.format.TextDecoration.BOLD)));
-        source.sendMessage(Component.text("Type ", NamedTextColor.GREEN)
+        source.sendMessage(Component.text("디스코드 서버에서 ", NamedTextColor.GREEN)
                 .append(Component.text("/link " + code, NamedTextColor.AQUA))
-                .append(Component.text(" in the Discord server to complete the linking.", NamedTextColor.GREEN)));
-        source.sendMessage(Component.text("This code will expire in 5 minutes.", NamedTextColor.GRAY));
+                .append(Component.text(" 를 입력하여 연동을 완료하세요.", NamedTextColor.GREEN)));
+        source.sendMessage(Component.text("이 코드는 5분 후 만료됩니다.", NamedTextColor.GRAY));
     }
 
     private String generateCode() {

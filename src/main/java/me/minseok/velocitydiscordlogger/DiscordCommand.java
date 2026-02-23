@@ -26,7 +26,7 @@ public class DiscordCommand implements SimpleCommand {
         String[] args = invocation.arguments();
 
         if (args.length == 0) {
-            source.sendMessage(Component.text("Usage: /discord <reload|unlink|debug>", NamedTextColor.RED));
+            source.sendMessage(Component.text("사용법: /discord <reload|unlink|debug>", NamedTextColor.RED));
             return;
         }
 
@@ -43,17 +43,17 @@ public class DiscordCommand implements SimpleCommand {
                 // }
                 try {
                     config.reload();
-                    source.sendMessage(Component.text("Configuration reloaded successfully!", NamedTextColor.GREEN));
+                    source.sendMessage(Component.text("설정을 다시 불러왔습니다!", NamedTextColor.GREEN));
                 } catch (Exception e) {
                     source.sendMessage(
-                            Component.text("Failed to reload configuration: " + e.getMessage(), NamedTextColor.RED));
+                            Component.text("설정 리로드 실패: " + e.getMessage(), NamedTextColor.RED));
                     e.printStackTrace();
                 }
                 break;
 
             case "unlink":
                 if (!(source instanceof Player)) {
-                    source.sendMessage(Component.text("Only players can use this command.", NamedTextColor.RED));
+                    source.sendMessage(Component.text("이 명령어는 플레이어만 사용할 수 있습니다.", NamedTextColor.RED));
                     return;
                 }
                 Player player = (Player) source;
@@ -61,33 +61,33 @@ public class DiscordCommand implements SimpleCommand {
 
                 CompletableFuture.runAsync(() -> {
                     database.unlinkAccount(uuid);
-                    source.sendMessage(Component.text("Your account has been unlinked.", NamedTextColor.GREEN));
+                    source.sendMessage(Component.text("디스코드 연동이 해제되었습니다.", NamedTextColor.GREEN));
                 });
                 break;
 
             case "debug":
                 if (!(source instanceof Player)) {
-                    source.sendMessage(Component.text("Only players can use this command.", NamedTextColor.RED));
+                    source.sendMessage(Component.text("이 명령어는 플레이어만 사용할 수 있습니다.", NamedTextColor.RED));
                     return;
                 }
                 if (!source.hasPermission("velocitydiscordlogger.debug")) {
-                    source.sendMessage(Component.text("You do not have permission.", NamedTextColor.RED));
+                    source.sendMessage(Component.text("권한이 없습니다.", NamedTextColor.RED));
                     return;
                 }
                 Player p = (Player) source;
-                source.sendMessage(Component.text("=== VelocityDiscordLogger Debug ===", NamedTextColor.GOLD));
+                source.sendMessage(Component.text("=== VelocityDiscordLogger 디버그 ===", NamedTextColor.GOLD));
 
                 CompletableFuture.runAsync(() -> {
                     // 1. DB Check
                     String discordId = database.getDiscordId(p.getUniqueId());
                     source.sendMessage(
-                            Component.text("Linked Discord ID: " + (discordId == null ? "Not Linked" : discordId),
+                            Component.text("연동된 Discord ID: " + (discordId == null ? "연동 안됨" : discordId),
                                     discordId == null ? NamedTextColor.RED : NamedTextColor.GREEN));
 
                     // 2. Config Check
                     String chatChannelId = config.getChatChannelId();
                     source.sendMessage(
-                            Component.text("Chat Channel ID: " + (chatChannelId.isEmpty() ? "Not Set" : chatChannelId),
+                            Component.text("채팅 채널 ID: " + (chatChannelId.isEmpty() ? "미설정" : chatChannelId),
                                     chatChannelId.isEmpty() ? NamedTextColor.RED : NamedTextColor.GREEN));
 
                     // 3. JDA Check
@@ -99,31 +99,31 @@ public class DiscordCommand implements SimpleCommand {
                                 net.dv8tion.jda.api.entities.channel.concrete.TextChannel channel = jda
                                         .getTextChannelById(chatChannelId);
                                 if (channel != null) {
-                                    source.sendMessage(Component.text("Chat Channel Found: " + channel.getName(),
+                                    source.sendMessage(Component.text("채팅 채널 발견: " + channel.getName(),
                                             NamedTextColor.GREEN));
                                     net.dv8tion.jda.api.entities.Guild guild = channel.getGuild();
                                     net.dv8tion.jda.api.entities.Member member = guild.retrieveMemberById(discordId)
                                             .complete();
                                     if (member != null) {
                                         source.sendMessage(
-                                                Component.text("Guild Member Found: " + member.getEffectiveName(),
+                                                Component.text("서버 멤버 발견: " + member.getEffectiveName(),
                                                         NamedTextColor.GREEN));
                                         source.sendMessage(Component.text(
-                                                "Avatar URL: " + member.getEffectiveAvatarUrl(), NamedTextColor.GREEN));
+                                                "아바타 URL: " + member.getEffectiveAvatarUrl(), NamedTextColor.GREEN));
                                     } else {
                                         source.sendMessage(
-                                                Component.text("Guild Member NOT Found!", NamedTextColor.RED));
+                                                Component.text("서버 멤버를 찾을 수 없습니다!", NamedTextColor.RED));
                                     }
                                 } else {
                                     source.sendMessage(
-                                            Component.text("Chat Channel NOT Found in JDA!", NamedTextColor.RED));
+                                            Component.text("JDA에서 채팅 채널을 찾을 수 없습니다!", NamedTextColor.RED));
                                 }
                             } else {
-                                source.sendMessage(Component.text("JDA instance is null!", NamedTextColor.RED));
+                                source.sendMessage(Component.text("JDA 인스턴스가 null입니다!", NamedTextColor.RED));
                             }
                         } catch (Exception e) {
                             source.sendMessage(
-                                    Component.text("Error during JDA check: " + e.getMessage(), NamedTextColor.RED));
+                                    Component.text("JDA 확인 중 오류 발생: " + e.getMessage(), NamedTextColor.RED));
                             e.printStackTrace();
                         }
                     }
@@ -132,7 +132,7 @@ public class DiscordCommand implements SimpleCommand {
 
             default:
                 source.sendMessage(
-                        Component.text("Unknown subcommand. Usage: /discord <reload|unlink|debug>",
+                        Component.text("알 수 없는 서브명령어입니다. 사용법: /discord <reload|unlink|debug>",
                                 NamedTextColor.RED));
                 break;
         }
